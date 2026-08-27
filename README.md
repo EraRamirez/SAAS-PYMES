@@ -6,6 +6,8 @@ MVP sin voz: React + Vite + TypeScript, pensado para instalarse como app ("Añad
 
 Backend: [S-Pback](https://github.com/EraRamirez/S-Pback)
 
+Arquitectura completa (incluye roadmap de voz): [ARQUITECTURA.md](ARQUITECTURA.md)
+
 ## Stack
 
 - React 18 + TypeScript
