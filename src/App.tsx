@@ -3,6 +3,8 @@ import NavBar from './components/NavBar'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Products from './pages/Products'
+import Quincena from './pages/Quincena'
+import RawMaterials from './pages/RawMaterials'
 import Register from './pages/Register'
 
 function isAuthenticated() {
@@ -12,10 +14,10 @@ function isAuthenticated() {
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) return <Navigate to="/login" replace />
   return (
-    <>
+    <div className="min-h-screen bg-slate-50">
       <NavBar />
-      {children}
-    </>
+      <main className="mx-auto max-w-3xl">{children}</main>
+    </div>
   )
 }
 
@@ -37,6 +39,22 @@ export default function App() {
         element={
           <PrivateRoute>
             <Products />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/materia-prima"
+        element={
+          <PrivateRoute>
+            <RawMaterials />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/quincena"
+        element={
+          <PrivateRoute>
+            <Quincena />
           </PrivateRoute>
         }
       />

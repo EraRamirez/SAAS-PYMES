@@ -1,10 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Package, Plus, ShoppingCart, SlidersHorizontal, Truck, X } from 'lucide-react'
 import { useState } from 'react'
+import Button from '../components/ui/Button'
+import Card from '../components/ui/Card'
+import EmptyState from '../components/ui/EmptyState'
+import PageHeader from '../components/ui/PageHeader'
+import SelectField from '../components/ui/SelectField'
+import { CardListSkeleton } from '../components/ui/Skeleton'
+import TextField from '../components/ui/TextField'
 import { apiFetch } from '../lib/api'
+
+type SaleType = 'pieza' | 'granel'
 
 type Product = {
   _id: string
   name: string
+  sale_type: SaleType
+  unit: string
   cost_price: number
   sale_price: number
   stock: number
@@ -23,6 +36,8 @@ function useProductMutation(onSuccess: () => void) {
 
 function NewProductForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState('')
+  const [saleType, setSaleType] = useState<SaleType>('pieza')
+  const [unit, setUnit] = useState<'kg' | 'g'>('kg')
   const [costPrice, setCostPrice] = useState('')
   const [salePrice, setSalePrice] = useState('')
   const [stock, setStock] = useState('')
@@ -35,6 +50,8 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
         method: 'POST',
         body: JSON.stringify({
           name,
+          sale_type: saleType,
+          ...(saleType === 'granel' ? { unit } : {}),
           cost_price: Number(costPrice),
           sale_price: Number(salePrice),
           stock: Number(stock || 0),
@@ -43,6 +60,7 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
       }),
     onSuccess: () => {
       setName('')
+      setSaleType('pieza')
       setCostPrice('')
       setSalePrice('')
       setStock('')
@@ -54,90 +72,98 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="mb-4 w-full rounded-xl border-2 border-dashed border-gray-300 py-3 text-sm font-medium text-gray-500"
-      >
-        + Nuevo producto
-      </button>
+      <Button variant="secondary" fullWidth icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)} className="mb-4 border-dashed">
+        Nuevo producto
+      </Button>
     )
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        mutation.mutate()
-      }}
-      className="mb-4 space-y-2 rounded-xl bg-white p-4 shadow"
-    >
-      <input
-        placeholder="Nombre del producto"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2"
-        required
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          placeholder="Costo"
-          type="number"
-          step="0.01"
-          value={costPrice}
-          onChange={(e) => setCostPrice(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2"
-          required
-        />
-        <input
-          placeholder="Precio de venta"
-          type="number"
-          step="0.01"
-          value={salePrice}
-          onChange={(e) => setSalePrice(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2"
-          required
-        />
-        <input
-          placeholder="Stock inicial"
-          type="number"
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2"
-        />
-        <input
-          placeholder="Alerta stock bajo"
-          type="number"
-          value={minStockAlert}
-          onChange={(e) => setMinStockAlert(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2"
-        />
-      </div>
-      {mutation.isError && <p className="text-sm text-red-600">No se pudo crear el producto</p>}
-      <div className="flex gap-2">
-        <button type="submit" className="flex-1 rounded-lg bg-green-600 py-2 font-medium text-white">
-          Guardar
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="px-3 text-sm text-gray-500">
-          Cancelar
-        </button>
-      </div>
-    </form>
+    <Card className="mb-4 p-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          mutation.mutate()
+        }}
+        className="space-y-3"
+      >
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-slate-900">Nuevo producto</p>
+          <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <TextField label="Nombre del producto" value={name} onChange={(e) => setName(e.target.value)} required />
+        <div className="grid grid-cols-2 gap-3">
+          <SelectField label="Tipo de venta" value={saleType} onChange={(e) => setSaleType(e.target.value as SaleType)}>
+            <option value="pieza">Por pieza</option>
+            <option value="granel">A granel</option>
+          </SelectField>
+          {saleType === 'granel' && (
+            <SelectField label="Unidad" value={unit} onChange={(e) => setUnit(e.target.value as 'kg' | 'g')}>
+              <option value="kg">Kilogramo (kg)</option>
+              <option value="g">Gramo (g)</option>
+            </SelectField>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            label={saleType === 'granel' ? `Costo por ${unit}` : 'Costo'}
+            type="number"
+            step="0.01"
+            value={costPrice}
+            onChange={(e) => setCostPrice(e.target.value)}
+            required
+          />
+          <TextField
+            label={saleType === 'granel' ? `Precio por ${unit}` : 'Precio de venta'}
+            type="number"
+            step="0.01"
+            value={salePrice}
+            onChange={(e) => setSalePrice(e.target.value)}
+            required
+          />
+          <TextField
+            label="Stock inicial"
+            type="number"
+            step={saleType === 'granel' ? '0.01' : '1'}
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+          />
+          <TextField
+            label="Alerta stock bajo"
+            type="number"
+            step={saleType === 'granel' ? '0.01' : '1'}
+            value={minStockAlert}
+            onChange={(e) => setMinStockAlert(e.target.value)}
+          />
+        </div>
+        {mutation.isError && <p className="text-sm text-red-600">No se pudo crear el producto</p>}
+        <div className="flex gap-2 pt-1">
+          <Button type="submit" loading={mutation.isPending} fullWidth>
+            Guardar
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    </Card>
   )
 }
 
-function MovementForm({
-  product,
-  type,
-  onDone,
-}: {
-  product: Product
-  type: ActionType
-  onDone: () => void
-}) {
+const actionMeta: Record<ActionType, { label: string; icon: typeof ShoppingCart; variant: 'primary' | 'secondary' }> = {
+  sale: { label: 'Vender', icon: ShoppingCart, variant: 'primary' },
+  purchase: { label: 'Comprar', icon: Truck, variant: 'secondary' },
+  adjustment: { label: 'Ajustar', icon: SlidersHorizontal, variant: 'secondary' },
+}
+
+function MovementForm({ product, type, onDone }: { product: Product; type: ActionType; onDone: () => void }) {
   const [quantity, setQuantity] = useState('')
   const [unitCost, setUnitCost] = useState('')
   const [reason, setReason] = useState('')
   const mutation = useProductMutation(onDone)
+  const isGranel = product.sale_type === 'granel'
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -161,47 +187,56 @@ function MovementForm({
   }
 
   const labels: Record<ActionType, string> = {
-    sale: 'Cuantas vendiste',
-    purchase: 'Cuantas entraron',
-    adjustment: 'Ajuste (+ o -)',
+    sale: `Cuantos ${product.unit} vendiste`,
+    purchase: `Cuantos ${product.unit} entraron`,
+    adjustment: `Ajuste en ${product.unit} (+ o -)`,
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2 border-t border-gray-100 bg-gray-50 p-3">
-      <input
-        type="number"
-        placeholder={labels[type]}
-        value={quantity}
-        onChange={(e) => setQuantity(e.target.value)}
-        className="w-32 rounded-lg border border-gray-300 px-2 py-1 text-sm"
-        required
-      />
-      {type === 'purchase' && (
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Costo unitario (opcional)"
-          value={unitCost}
-          onChange={(e) => setUnitCost(e.target.value)}
-          className="w-40 rounded-lg border border-gray-300 px-2 py-1 text-sm"
-        />
-      )}
-      {type === 'adjustment' && (
-        <input
-          placeholder="Motivo (ej. merma)"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          className="w-40 rounded-lg border border-gray-300 px-2 py-1 text-sm"
-        />
-      )}
-      {mutation.isError && <p className="w-full text-sm text-red-600">No se pudo registrar</p>}
-      <button type="submit" className="rounded-lg bg-green-600 px-3 py-1 text-sm font-medium text-white">
-        Confirmar
-      </button>
-      <button type="button" onClick={onDone} className="text-sm text-gray-500">
-        Cancelar
-      </button>
-    </form>
+    <motion.form
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
+      onSubmit={handleSubmit}
+      className="overflow-hidden border-t border-slate-100 bg-slate-50/60"
+    >
+      <div className="flex flex-wrap items-end gap-2 p-3">
+        <div className="w-36">
+          <TextField
+            label={labels[type]}
+            type="number"
+            step={isGranel ? '0.01' : '1'}
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            required
+          />
+        </div>
+        {type === 'purchase' && (
+          <div className="w-36">
+            <TextField
+              label="Costo unitario (opcional)"
+              type="number"
+              step="0.01"
+              value={unitCost}
+              onChange={(e) => setUnitCost(e.target.value)}
+            />
+          </div>
+        )}
+        {type === 'adjustment' && (
+          <div className="w-40">
+            <TextField label="Motivo" placeholder="ej. merma" value={reason} onChange={(e) => setReason(e.target.value)} />
+          </div>
+        )}
+        <Button type="submit" loading={mutation.isPending} className="h-[42px]">
+          Confirmar
+        </Button>
+        <Button type="button" variant="ghost" onClick={onDone} className="h-[42px]">
+          Cancelar
+        </Button>
+      </div>
+      {mutation.isError && <p className="px-3 pb-3 text-sm text-red-600">No se pudo registrar</p>}
+    </motion.form>
   )
 }
 
@@ -217,57 +252,68 @@ export default function Products() {
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ['products'] })
     queryClient.invalidateQueries({ queryKey: ['summary'] })
+    queryClient.invalidateQueries({ queryKey: ['quincena'] })
     setActiveAction(null)
   }
 
-  if (isLoading) return <p className="p-4">Cargando...</p>
-  if (error) return <p className="p-4 text-red-600">No se pudo cargar los productos</p>
-
   return (
     <div className="p-4">
-      <h1 className="mb-4 text-xl font-semibold text-gray-900">Mis productos</h1>
+      <PageHeader title="Mis productos" subtitle="Lo que vendes: por pieza o a granel" />
 
       <NewProductForm onCreated={refresh} />
 
-      <ul className="divide-y divide-gray-200 rounded-xl bg-white shadow">
-        {data?.map((product) => (
-          <li key={product._id}>
-            <div className="flex items-center justify-between p-4">
-              <div>
-                <p className="font-medium text-gray-900">{product.name}</p>
-                <p className="text-sm text-gray-500">Precio ${product.sale_price.toFixed(2)}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">{product.stock} pzas</span>
-                <div className="flex gap-1 text-xs">
-                  <button
-                    onClick={() => setActiveAction({ productId: product._id, type: 'sale' })}
-                    className="rounded bg-green-50 px-2 py-1 font-medium text-green-700"
-                  >
-                    Vender
-                  </button>
-                  <button
-                    onClick={() => setActiveAction({ productId: product._id, type: 'purchase' })}
-                    className="rounded bg-blue-50 px-2 py-1 font-medium text-blue-700"
-                  >
-                    Comprar
-                  </button>
-                  <button
-                    onClick={() => setActiveAction({ productId: product._id, type: 'adjustment' })}
-                    className="rounded bg-amber-50 px-2 py-1 font-medium text-amber-700"
-                  >
-                    Ajustar
-                  </button>
+      {isLoading && <CardListSkeleton />}
+      {error && <p className="text-red-600">No se pudo cargar los productos</p>}
+
+      {data && data.length === 0 && <EmptyState icon={Package} message="Aun no tienes productos." />}
+
+      {data && data.length > 0 && (
+      <Card className="divide-y divide-slate-100 overflow-hidden p-0">
+        <AnimatePresence initial={false}>
+          {data.map((product) => (
+            <motion.div key={product._id} layout exit={{ opacity: 0 }}>
+              <div className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="font-semibold text-slate-900">{product.name}</p>
+                  <p className="text-sm text-slate-500">
+                    ${product.sale_price.toFixed(2)} / {product.unit}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700">
+                    {product.stock} {product.unit}
+                  </span>
+                  <div className="flex gap-1">
+                    {(Object.keys(actionMeta) as ActionType[]).map((type) => {
+                      const { icon: Icon, variant } = actionMeta[type]
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setActiveAction({ productId: product._id, type })}
+                          title={actionMeta[type].label}
+                          className={`rounded-lg p-2 transition-colors ${
+                            variant === 'primary'
+                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
-            {activeAction?.productId === product._id && (
-              <MovementForm product={product} type={activeAction.type} onDone={refresh} />
-            )}
-          </li>
-        ))}
-        {data?.length === 0 && <li className="p-4 text-sm text-gray-500">Aun no tienes productos.</li>}
-      </ul>
+              <AnimatePresence>
+                {activeAction?.productId === product._id && (
+                  <MovementForm product={product} type={activeAction.type} onDone={refresh} />
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </Card>
+      )}
     </div>
   )
 }

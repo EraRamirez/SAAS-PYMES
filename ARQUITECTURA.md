@@ -7,7 +7,9 @@
 
 La implementación actual del repo (React 18 + Vite + TS + Tailwind + TanStack Query + React Router + PWA, ver [README.md](README.md)) es consistente con el principio "Web Mobile-First" de la arquitectura objetivo.
 
-**Nota clave del negocio:** en la primera entrega **NO se implementa el registro por voz**. No hay botón de grabar audio, Speech-to-Text, ni interacción conversacional. El frontend solo cubre formularios/pantallas para productos, movimientos (venta/entrada) y el resumen (stock, ganancia, alertas).
+**Nota clave del negocio:** en la primera entrega **NO se implementa el registro por voz**. No hay botón de grabar audio, Speech-to-Text, ni interacción conversacional. El frontend cubre formularios/pantallas para productos (por pieza o a granel), movimientos (venta/compra/ajuste), materia prima (compra/uso), y reportes (resumen diario y quincenal).
+
+**Generalización (ver [S-Pback/ARQUITECTURA.md](https://github.com/EraRamirez/S-Pback/blob/main/ARQUITECTURA.md) sección 6.10-6.12):** el modelo ya no asume solo abarrotes por pieza — soporta también venta a granel (kg/g), para poder aplicarse a otros giros como un molino de masa.
 
 ## 1. Objetivo del producto
 
@@ -67,10 +69,12 @@ No se desarrolla app nativa en el MVP.
 
 ### Alcance de la primera entrega (sin voz)
 
-- Login (teléfono + PIN)
-- CRUD de productos (crear, editar, consultar, eliminar)
-- Registrar entrada / venta de forma manual (formulario, no voz)
-- Dashboard: stock actual, ganancia estimada (día/semana), alerta de producto bajo en inventario
+- Login y registro de negocio (teléfono + PIN)
+- CRUD de productos, por pieza o a granel (kg/g)
+- Registrar venta / compra / ajuste de forma manual (formulario, no voz)
+- Materia prima: alta, compra y uso (inventario independiente de productos, sin receta)
+- Dashboard: ganancia estimada (día/semana), alerta de producto bajo en inventario
+- Reporte quincenal: ingresos vs. egresos totales, con desglose diario opcional
 
 ### Roadmap (cuando se agregue voz)
 
