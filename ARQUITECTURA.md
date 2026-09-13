@@ -7,7 +7,11 @@
 
 La implementación actual del repo (React 18 + Vite + TS + Tailwind + TanStack Query + React Router + PWA, ver [README.md](README.md)) es consistente con el principio "Web Mobile-First" de la arquitectura objetivo.
 
-**Nota clave del negocio:** en la primera entrega **NO se implementa el registro por voz**. No hay botón de grabar audio, Speech-to-Text, ni interacción conversacional. El frontend solo cubre formularios/pantallas para productos, movimientos (venta/entrada) y el resumen (stock, ganancia, alertas).
+**Nota clave del negocio:** en la primera entrega **NO se implementa el registro por voz**. No hay botón de grabar audio, Speech-to-Text, ni interacción conversacional. El frontend cubre formularios/pantallas para productos (por pieza o a granel), movimientos (venta/compra/ajuste), materia prima (compra/uso), y reportes (resumen diario y quincenal).
+
+**Generalización (ver [S-Pback/ARQUITECTURA.md](https://github.com/EraRamirez/S-Pback/blob/main/ARQUITECTURA.md) sección 6.10-6.13):** el modelo ya no asume solo abarrotes por pieza — soporta también venta a granel (kg/g), materia prima independiente, y apartados/reservaciones, para poder aplicarse a otros giros como un molino de masa.
+
+**Diseño mobile-first (UI):** navegación en barra inferior fija (patrón de app móvil real, no pestañas de escritorio arriba), objetivos de toque grandes (mínimo ~52px), botones de acción con ícono + texto visible (nunca solo ícono, para usuarios no técnicos), animaciones sutiles con `framer-motion`, íconos de `lucide-react`. Kit de componentes reutilizable en `src/components/ui/`.
 
 ## 1. Objetivo del producto
 
@@ -60,17 +64,25 @@ El usuario principal usa celular, no quiere instalar apps, y no es técnico. Por
 
 - Aplicación web optimizada para móvil (PWA — "Añadir a inicio")
 - Botón grande para grabar voz (fase posterior; no en la primera entrega)
-- Interfaz minimalista
+- Interfaz minimalista, navegación tipo app (barra inferior fija con ícono + texto)
 - Visualización simple de: stock actual, productos, ganancia estimada, alertas de inventario bajo
 
 No se desarrolla app nativa en el MVP.
 
 ### Alcance de la primera entrega (sin voz)
 
-- Login (teléfono + PIN)
-- CRUD de productos (crear, editar, consultar, eliminar)
-- Registrar entrada / venta de forma manual (formulario, no voz)
-- Dashboard: stock actual, ganancia estimada (día/semana), alerta de producto bajo en inventario
+- Login y registro de negocio (teléfono + PIN)
+- CRUD de productos, por pieza o a granel (kg/g). Solo nombre y precio de venta son obligatorios; costo, stock inicial y alerta quedan detrás de una casilla "opcional" (muchos dueños solo quieren capturar el precio de venta)
+- Registrar venta / compra / ajuste de forma manual (formulario, no voz)
+- Materia prima: alta, compra y uso (inventario independiente de productos, sin receta)
+- Apartados: clientes que reservan producto para recoger después. Se entrega el apartado completo de una vez (no producto por producto); si se recoge en partes, se capturan apartados separados. CRUD completo mientras esté pendiente (agregar/editar/quitar producto, editar cliente/fecha/hora — común que se les olvide apartar algo). Cargo fijo de $2 si el producto va en bolsa en vez de que el cliente traiga su propio bote. Estado de pago (pagado/anticipo/sin pagar), historial permanente, resumen de cuánto se ha apartado/entregado/pendiente por producto
+- Dashboard: ganancia estimada (día/semana), alerta de producto bajo en inventario, y tabla de ventas de hoy por producto (se llena sola conforme se registran ventas, sea desde Productos o al entregar un apartado)
+- Reporte quincenal: ingresos vs. egresos totales, con desglose diario opcional
+
+### Navegación (mobile-first)
+
+- `TopBar` (`src/components/TopBar.tsx`): barra superior delgada — logo/nombre del negocio + botón de salir. No lleva los tabs de navegación.
+- `BottomNav` (`src/components/BottomNav.tsx`): barra inferior fija (patrón de app móvil) con 5 pestañas — Inicio, Productos, Insumos, Apartados, Quincena — ícono + etiqueta corta, indicador activo animado. Se eligió sobre una barra superior de tabs porque es el patrón que un usuario de celular ya conoce (Instagram, WhatsApp, etc.) y queda al alcance del pulgar.
 
 ### Roadmap (cuando se agregue voz)
 
