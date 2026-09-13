@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import NavBar from './components/NavBar'
+import BottomNav from './components/BottomNav'
+import TopBar from './components/TopBar'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Products from './pages/Products'
 import Quincena from './pages/Quincena'
 import RawMaterials from './pages/RawMaterials'
 import Register from './pages/Register'
+import Reservations from './pages/Reservations'
 
 function isAuthenticated() {
   return Boolean(localStorage.getItem('token'))
@@ -15,8 +17,9 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated()) return <Navigate to="/login" replace />
   return (
     <div className="min-h-screen bg-slate-50">
-      <NavBar />
-      <main className="mx-auto max-w-3xl">{children}</main>
+      <TopBar />
+      <main className="mx-auto max-w-3xl pb-20">{children}</main>
+      <BottomNav />
     </div>
   )
 }
@@ -47,6 +50,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <RawMaterials />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/apartados"
+        element={
+          <PrivateRoute>
+            <Reservations />
           </PrivateRoute>
         }
       />

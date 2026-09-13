@@ -134,8 +134,8 @@ function MovementForm({ material, type, onDone }: { material: RawMaterial; type:
       onSubmit={handleSubmit}
       className="overflow-hidden border-t border-slate-100 bg-slate-50/60"
     >
-      <div className="flex flex-wrap items-end gap-2 p-3">
-        <div className="w-32">
+      <div className="space-y-3 p-3">
+        <div className={type === 'purchase' ? 'grid grid-cols-2 gap-2' : ''}>
           <TextField
             label={`Cuantos ${material.unit}`}
             type="number"
@@ -144,9 +144,7 @@ function MovementForm({ material, type, onDone }: { material: RawMaterial; type:
             onChange={(e) => setQuantity(e.target.value)}
             required
           />
-        </div>
-        {type === 'purchase' && (
-          <div className="w-32">
+          {type === 'purchase' && (
             <TextField
               label="Costo unitario"
               type="number"
@@ -155,14 +153,16 @@ function MovementForm({ material, type, onDone }: { material: RawMaterial; type:
               onChange={(e) => setUnitCost(e.target.value)}
               required
             />
-          </div>
-        )}
-        <Button type="submit" loading={mutation.isPending} className="h-[42px]">
-          Confirmar
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone} className="h-[42px]">
-          Cancelar
-        </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" loading={mutation.isPending} fullWidth>
+            Confirmar
+          </Button>
+          <Button type="button" variant="ghost" onClick={onDone}>
+            Cancelar
+          </Button>
+        </div>
       </div>
       {mutation.isError && <p className="px-3 pb-3 text-sm text-red-600">No se pudo registrar</p>}
     </motion.form>
@@ -199,28 +199,28 @@ export default function RawMaterials() {
           <AnimatePresence initial={false}>
             {data.map((material) => (
               <motion.div key={material._id} layout exit={{ opacity: 0 }}>
-                <div className="flex items-center justify-between gap-3 p-4">
-                  <p className="font-semibold text-slate-900">{material.name}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700">
+                <div className="p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="truncate font-semibold text-slate-900">{material.name}</p>
+                    <span className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
                       {material.stock} {material.unit}
                     </span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setActiveAction({ materialId: material._id, type: 'purchase' })}
-                        title="Comprar"
-                        className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200"
-                      >
-                        <Truck className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setActiveAction({ materialId: material._id, type: 'usage' })}
-                        title="Usar"
-                        className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setActiveAction({ materialId: material._id, type: 'purchase' })}
+                      className="flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl bg-slate-100 text-slate-600 transition-colors active:bg-slate-200"
+                    >
+                      <Truck className="h-5 w-5" />
+                      <span className="text-xs font-medium">Comprar</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveAction({ materialId: material._id, type: 'usage' })}
+                      className="flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl bg-slate-100 text-slate-600 transition-colors active:bg-slate-200"
+                    >
+                      <Minus className="h-5 w-5" />
+                      <span className="text-xs font-medium">Usar</span>
+                    </button>
                   </div>
                 </div>
                 <AnimatePresence>

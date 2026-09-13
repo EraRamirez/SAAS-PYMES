@@ -42,6 +42,7 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
   const [salePrice, setSalePrice] = useState('')
   const [stock, setStock] = useState('')
   const [minStockAlert, setMinStockAlert] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [open, setOpen] = useState(false)
 
   const mutation = useMutation({
@@ -52,7 +53,7 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
           name,
           sale_type: saleType,
           ...(saleType === 'granel' ? { unit } : {}),
-          cost_price: Number(costPrice),
+          cost_price: Number(costPrice || 0),
           sale_price: Number(salePrice),
           stock: Number(stock || 0),
           min_stock_alert: Number(minStockAlert || 0),
@@ -65,6 +66,7 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
       setSalePrice('')
       setStock('')
       setMinStockAlert('')
+      setShowAdvanced(false)
       setOpen(false)
       onCreated()
     },
@@ -106,38 +108,61 @@ function NewProductForm({ onCreated }: { onCreated: () => void }) {
             </SelectField>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <TextField
-            label={saleType === 'granel' ? `Costo por ${unit}` : 'Costo'}
-            type="number"
-            step="0.01"
-            value={costPrice}
-            onChange={(e) => setCostPrice(e.target.value)}
-            required
+        <TextField
+          label={saleType === 'granel' ? `Precio por ${unit}` : 'Precio de venta'}
+          type="number"
+          step="0.01"
+          value={salePrice}
+          onChange={(e) => setSalePrice(e.target.value)}
+          required
+        />
+
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+          <input
+            type="checkbox"
+            checked={showAdvanced}
+            onChange={(e) => setShowAdvanced(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/30"
           />
-          <TextField
-            label={saleType === 'granel' ? `Precio por ${unit}` : 'Precio de venta'}
-            type="number"
-            step="0.01"
-            value={salePrice}
-            onChange={(e) => setSalePrice(e.target.value)}
-            required
-          />
-          <TextField
-            label="Stock inicial"
-            type="number"
-            step={saleType === 'granel' ? '0.01' : '1'}
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-          />
-          <TextField
-            label="Alerta stock bajo"
-            type="number"
-            step={saleType === 'granel' ? '0.01' : '1'}
-            value={minStockAlert}
-            onChange={(e) => setMinStockAlert(e.target.value)}
-          />
-        </div>
+          Agregar costo, stock inicial y alerta (opcional)
+        </label>
+
+        <AnimatePresence>
+          {showAdvanced && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <TextField
+                  label={saleType === 'granel' ? `Costo por ${unit}` : 'Costo'}
+                  type="number"
+                  step="0.01"
+                  value={costPrice}
+                  onChange={(e) => setCostPrice(e.target.value)}
+                />
+                <TextField
+                  label="Stock inicial"
+                  type="number"
+                  step={saleType === 'granel' ? '0.01' : '1'}
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                />
+                <TextField
+                  label="Alerta stock bajo"
+                  type="number"
+                  step={saleType === 'granel' ? '0.01' : '1'}
+                  value={minStockAlert}
+                  onChange={(e) => setMinStockAlert(e.target.value)}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {mutation.isError && <p className="text-sm text-red-600">No se pudo crear el producto</p>}
         <div className="flex gap-2 pt-1">
           <Button type="submit" loading={mutation.isPending} fullWidth>
@@ -201,8 +226,8 @@ function MovementForm({ product, type, onDone }: { product: Product; type: Actio
       onSubmit={handleSubmit}
       className="overflow-hidden border-t border-slate-100 bg-slate-50/60"
     >
-      <div className="flex flex-wrap items-end gap-2 p-3">
-        <div className="w-36">
+      <div className="space-y-3 p-3">
+        <div className={type === 'sale' ? '' : 'grid grid-cols-2 gap-2'}>
           <TextField
             label={labels[type]}
             type="number"
@@ -211,9 +236,7 @@ function MovementForm({ product, type, onDone }: { product: Product; type: Actio
             onChange={(e) => setQuantity(e.target.value)}
             required
           />
-        </div>
-        {type === 'purchase' && (
-          <div className="w-36">
+          {type === 'purchase' && (
             <TextField
               label="Costo unitario (opcional)"
               type="number"
@@ -221,19 +244,19 @@ function MovementForm({ product, type, onDone }: { product: Product; type: Actio
               value={unitCost}
               onChange={(e) => setUnitCost(e.target.value)}
             />
-          </div>
-        )}
-        {type === 'adjustment' && (
-          <div className="w-40">
+          )}
+          {type === 'adjustment' && (
             <TextField label="Motivo" placeholder="ej. merma" value={reason} onChange={(e) => setReason(e.target.value)} />
-          </div>
-        )}
-        <Button type="submit" loading={mutation.isPending} className="h-[42px]">
-          Confirmar
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone} className="h-[42px]">
-          Cancelar
-        </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button type="submit" loading={mutation.isPending} fullWidth>
+            Confirmar
+          </Button>
+          <Button type="button" variant="ghost" onClick={onDone}>
+            Cancelar
+          </Button>
+        </div>
       </div>
       {mutation.isError && <p className="px-3 pb-3 text-sm text-red-600">No se pudo registrar</p>}
     </motion.form>
@@ -272,36 +295,36 @@ export default function Products() {
         <AnimatePresence initial={false}>
           {data.map((product) => (
             <motion.div key={product._id} layout exit={{ opacity: 0 }}>
-              <div className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <p className="font-semibold text-slate-900">{product.name}</p>
-                  <p className="text-sm text-slate-500">
-                    ${product.sale_price.toFixed(2)} / {product.unit}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700">
+              <div className="p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">{product.name}</p>
+                    <p className="text-sm text-slate-500">
+                      ${product.sale_price.toFixed(2)} / {product.unit}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
                     {product.stock} {product.unit}
                   </span>
-                  <div className="flex gap-1">
-                    {(Object.keys(actionMeta) as ActionType[]).map((type) => {
-                      const { icon: Icon, variant } = actionMeta[type]
-                      return (
-                        <button
-                          key={type}
-                          onClick={() => setActiveAction({ productId: product._id, type })}
-                          title={actionMeta[type].label}
-                          className={`rounded-lg p-2 transition-colors ${
-                            variant === 'primary'
-                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </button>
-                      )
-                    })}
-                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(actionMeta) as ActionType[]).map((type) => {
+                    const { icon: Icon, label, variant } = actionMeta[type]
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => setActiveAction({ productId: product._id, type })}
+                        className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl transition-colors ${
+                          variant === 'primary'
+                            ? 'bg-emerald-50 text-emerald-700 active:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-600 active:bg-slate-200'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span className="text-xs font-medium">{label}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
               <AnimatePresence>

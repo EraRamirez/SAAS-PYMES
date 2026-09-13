@@ -1,17 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, CalendarRange, TrendingUp } from 'lucide-react'
+import { AlertTriangle, CalendarRange, ClipboardList, TrendingUp } from 'lucide-react'
 import Card from '../components/ui/Card'
+import EmptyState from '../components/ui/EmptyState'
 import PageHeader from '../components/ui/PageHeader'
 import Skeleton from '../components/ui/Skeleton'
 import StatCard from '../components/ui/StatCard'
 import { apiFetch } from '../lib/api'
+
+type VentaHoy = { product_id: string; product_name: string; unit: string; cantidad: number; monto: number }
 
 type Summary = {
   stockTotal: number
   gananciaHoy: number
   gananciaSemana: number
   productosBajoInventario: { id: string; nombre: string; cantidad: number; unidad: string }[]
+  ventasHoy: VentaHoy[]
 }
 
 export default function Dashboard() {
@@ -46,6 +50,37 @@ export default function Dashboard() {
           value={`$${data?.gananciaSemana.toFixed(2)}`}
           tone="emerald"
         />
+      </div>
+
+      <div className="mt-4">
+        <h2 className="mb-2 text-sm font-semibold text-slate-700">Ventas de hoy</h2>
+        {data && data.ventasHoy.length === 0 && (
+          <EmptyState icon={ClipboardList} message="Aun no se registran ventas hoy." />
+        )}
+        {data && data.ventasHoy.length > 0 && (
+          <Card className="overflow-hidden p-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-left text-slate-500">
+                  <th className="p-3 font-medium">Producto</th>
+                  <th className="p-3 font-medium">Cantidad</th>
+                  <th className="p-3 font-medium">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.ventasHoy.map((row) => (
+                  <tr key={row.product_id} className="border-b border-slate-50 last:border-0">
+                    <td className="p-3 text-slate-800">{row.product_name}</td>
+                    <td className="p-3 text-slate-600">
+                      {row.cantidad} {row.unit}
+                    </td>
+                    <td className="p-3 font-medium text-emerald-600">${row.monto.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
       </div>
 
       <AnimatePresence>
